@@ -8,6 +8,7 @@ import { useSessions } from './hooks/useSessions';
 import { useAutoSave } from './hooks/useAutoSave';
 import { getModel } from '@mariozechner/pi-ai';
 import { Settings, History, Plus } from 'lucide-react';
+import { createJavaScriptReplTool } from './tools/javascript-repl';
 
 function App() {
   const createAgent = useAgentStore((state) => state.createAgent);
@@ -36,13 +37,21 @@ function App() {
     // Set proxy server URL as the base URL for browser requests
     defaultModel.baseUrl = 'http://localhost:3001';
 
+    // Create tools
+    const javascriptRepl = createJavaScriptReplTool();
+
     createAgent({
       initialState: {
-        systemPrompt: 'You are a helpful AI assistant powered by Azure OpenAI with Managed Identity.',
+        systemPrompt: `You are a helpful AI assistant powered by Azure OpenAI with Managed Identity.
+
+Available tools:
+- JavaScript REPL: Execute JavaScript code in a browser environment with access to standard Web APIs
+
+Feel free to use these tools when needed to provide accurate and helpful responses.`,
         model: defaultModel,
         thinkingLevel: 'off',
         messages: [],
-        tools: [],
+        tools: [javascriptRepl],
       },
     });
   }, [createAgent]);
