@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web UI Diagnostics</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        h1 { color: #4ec9b0; }
+        h2 { color: #569cd6; margin-top: 20px; }
+        .pass { color: #4ec9b0; }
+        .fail { color: #f48771; }
+        .info { color: #ce9178; }
+        pre {
+            background: #2d2d2d;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px 10px 0;
+        }
+        button:hover { background: #005a9e; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Pi Web UI Diagnostics</h1>
+
+    <button onclick="runDiagnostics()">Run Diagnostics</button>
+    <button onclick="location.href='http://localhost:5173'">Open Web UI</button>
+    <button onclick="checkProxy()">Check Proxy</button>
+
+    <div id="output"></div>
+
+    <script>
+        async function runDiagnostics() {
+            const output = document.getElementById('output');
+            let html = '<h2>Diagnostic Results</h2>';
+
+            // Test 1: Check if running on correct port
+            html += '<h3>✓ Environment</h3>';
+            html += `<div class="info">Current URL: ${window.location.href}</div>`;
+            html += `<div class="info">Expected: http://localhost:5173</div>`;
+            if (window.location.port === '5173') {
+                html += '<div class="pass">✓ Running on correct port</div>';
+            } else {
+                html += '<div class="fail">✗ Wrong port! Should be on :5173</div>';
+            }
+
+            // Test 2: Fetch main page
+            html += '<h3>✓ Web UI Page</h3>';
+            try {
+                const response = await fetch('http://localhost:5173');
+                if (response.ok) {
+                    html += '<div class="pass">✓ Web UI is accessible</div>';
+                    const text = await response.text();
+
+                    // Check if main-azure.ts is loaded
+                    if (text.includes('main-azure.ts')) {
+                        html += '<div class="pass">✓ Loading main-azure.ts</div>';
+                    } else if (text.includes('main.ts')) {
+                        html += '<div class="fail">✗ Loading main.ts instead of main-azure.ts!</div>';
+                    }
+                } else {
+                    html += '<div class="fail">✗ Web UI returned status: ' + response.status + '</div>';
+                }
+            } catch (error) {
+                html += '<div class="fail">✗ Cannot reach Web UI: ' + error.message + '</div>';
+            }
+
+            // Test 3: Check proxy
+            html += '<h3>✓ Proxy Server</h3>';
+            try {
+                const response = await fetch('http://localhost:3001/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    html += '<div class="pass">✓ Proxy is running</div>';
+                    html += `<div class="info">Endpoint: ${data.endpoint}</div>`;
+                    html += `<div class="info">API Version: ${data.apiVersion}</div>`;
+                } else {
+                    html += '<div class="fail">✗ Proxy returned status: ' + response.status + '</div>';
+                }
+            } catch (error) {
+                html += '<div class="fail">✗ Cannot reach proxy: ' + error.message + '</div>';
+            }
+
+            // Test 4: Check Azure OpenAI configuration
+            html += '<h3>✓ Configuration</h3>';
+            html += '<div class="info">Expected Base URL: http://localhost:3001/openai</div>';
+            html += '<div class="info">Expected API Version: 2025-03-01-preview</div>';
+
+            // Test 5: DOM Structure
+            html += '<h3>✓ Instructions</h3>';
+            html += '<div class="info">To debug the Web UI:</div>';
+            html += '<ol>';
+            html += '<li>Open http://localhost:5173 in a new tab</li>';
+            html += '<li>Open Developer Console (F12 or Cmd+Option+I)</li>';
+            html += '<li>Check Console tab for errors</li>';
+            html += '<li>Run: <code>document.querySelector("pi-chat-panel")</code></li>';
+            html += '<li>If null, ChatPanel is not rendering</li>';
+            html += '<li>If object, check its properties</li>';
+            html += '</ol>';
+
+            html += '<h3>✓ Common Issues</h3>';
+            html += '<ul>';
+            html += '<li><strong>No input box:</strong> ChatPanel not initialized or Lit.js error</li>';
+            html += '<li><strong>Blank page:</strong> JavaScript error preventing render</li>';
+            html += '<li><strong>Loading forever:</strong> Agent initialization failed</li>';
+            html += '</ul>';
+
+            html += '<h3>✓ Console Commands to Try</h3>';
+            html += '<pre>';
+            html += '// Check if ChatPanel exists\n';
+            html += 'document.querySelector("pi-chat-panel")\n\n';
+            html += '// Check for errors\n';
+            html += 'window.addEventListener("error", e => console.error(e))\n\n';
+            html += '// Check agent state\n';
+            html += 'console.log(window.agent)\n';
+            html += '</pre>';
+
+            output.innerHTML = html;
+        }
+
+        async function checkProxy() {
+            const output = document.getElementById('output');
+            output.innerHTML = '<h2>Checking Proxy...</h2>';
+
+            try {
+                const response = await fetch('http://localhost:3001/health');
+                const data = await response.json();
+                output.innerHTML += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                output.innerHTML += '<div class="fail">Error: ' + error.message + '</div>';
+            }
+        }
+
+        // Run diagnostics on load
+        runDiagnostics();
+    </script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+graph TB
+    subgraph "External Services"
+        OpenAI[OpenAI API]
+        Anthropic[Anthropic API]
+        Google[Google Gemini API]
+        Bedrock[AWS Bedrock]
+        AzureOAI[Azure OpenAI<br/>with Managed Identity]
+        Mistral[Mistral AI]
+        Slack[Slack API]
+        GPU[GPU Pods / vLLM]
+    end
+
+    subgraph "Pi Monorepo"
+        subgraph "Core Libraries"
+            TUI["@mariozechner/pi-tui<br/>━━━━━━━━━━━━━━━<br/>Terminal UI Library<br/>• Differential Rendering<br/>• Text Editors<br/>• Layout System"]
+
+            AI["@mariozechner/pi-ai<br/>━━━━━━━━━━━━━━━<br/>Unified LLM API<br/>• 700+ Models<br/>• Auto Discovery<br/>• Streaming Support<br/>• Tool Calling"]
+
+            Agent["@mariozechner/pi-agent-core<br/>━━━━━━━━━━━━━━━<br/>Agent Runtime<br/>• Transport Abstraction<br/>• State Management<br/>• Tool Execution<br/>• Attachment Support"]
+        end
+
+        subgraph "Applications"
+            CodingAgent["@mariozechner/pi-coding-agent<br/>━━━━━━━━━━━━━━━<br/>Coding Agent CLI<br/>• Interactive TUI<br/>• Session Management<br/>• File Operations<br/>• Bash Execution<br/>• Git Integration"]
+
+            Mom["@mariozechner/pi-mom<br/>━━━━━━━━━━━━━━━<br/>Slack Bot<br/>• Message Delegation<br/>• Thread Management<br/>• Code Execution<br/>• Sandbox Runtime"]
+
+            WebUI["@mariozechner/pi-web-ui<br/>━━━━━━━━━━━━━━━<br/>Web Components<br/>• Chat Interface<br/>• File Upload<br/>• Markdown Rendering<br/>• Syntax Highlighting"]
+
+            Pods["@mariozechner/pi-pods<br/>━━━━━━━━━━━━━━━<br/>GPU Pod Manager<br/>• vLLM Deployment<br/>• Model Management<br/>• Resource Monitoring"]
+        end
+    end
+
+    subgraph "AI Provider Layer"
+        subgraph "Authentication"
+            APIKeys[API Keys]
+            ManagedIdentity["Azure Managed Identity<br/>✓ AzureCliCredential<br/>✓ ManagedIdentityCredential"]
+        end
+
+        subgraph "Providers"
+            ProviderOpenAI[OpenAI Provider<br/>• Completions<br/>• Responses API]
+            ProviderAnthropic[Anthropic Provider<br/>• Claude Models<br/>• Streaming]
+            ProviderGoogle[Google Provider<br/>• Gemini<br/>• Vertex AI<br/>• CLI Integration]
+            ProviderAzure["Azure OpenAI Provider<br/>━━━━━━━━━━━━━━━<br/>✓ Managed Identity Auth<br/>• Responses API<br/>• Chat Completions<br/>• Native Client"]
+            ProviderBedrock[Bedrock Provider<br/>• Multi-Model<br/>• Streaming]
+        end
+    end
+
+    %% Core Dependencies
+    AI --> ProviderOpenAI
+    AI --> ProviderAnthropic
+    AI --> ProviderGoogle
+    AI --> ProviderAzure
+    AI --> ProviderBedrock
+
+    Agent --> AI
+    CodingAgent --> Agent
+    CodingAgent --> AI
+    CodingAgent --> TUI
+
+    Mom --> Agent
+    Mom --> AI
+    Mom --> CodingAgent
+
+    WebUI --> AI
+    WebUI --> TUI
+
+    Pods --> Agent
+
+    %% External Connections
+    ProviderOpenAI -.->|API Key| OpenAI
+    ProviderAnthropic -.->|API Key| Anthropic
+    ProviderGoogle -.->|API Key| Google
+    ProviderBedrock -.->|AWS Creds| Bedrock
+    ProviderAzure -.->|Managed Identity| AzureOAI
+
+    AI -.->|Optional| Mistral
+
+    Mom -.->|Socket Mode| Slack
+    Pods -.->|SSH/API| GPU
+
+    %% Authentication Flows
+    APIKeys -.-> ProviderOpenAI
+    APIKeys -.-> ProviderAnthropic
+    APIKeys -.-> ProviderGoogle
+    ManagedIdentity -.-> ProviderAzure
+
+    style AzureOAI fill:#0078d4,stroke:#005a9e,color:#fff
+    style ProviderAzure fill:#0078d4,stroke:#005a9e,color:#fff
+    style ManagedIdentity fill:#0078d4,stroke:#005a9e,color:#fff
+    style AI fill:#4CAF50,stroke:#388E3C,color:#fff
+    style Agent fill:#2196F3,stroke:#1976D2,color:#fff
+    style TUI fill:#FF9800,stroke:#F57C00,color:#fff
+    style CodingAgent fill:#9C27B0,stroke:#7B1FA2,color:#fff
+    style Mom fill:#E91E63,stroke:#C2185B,color:#fff
+    style WebUI fill:#00BCD4,stroke:#0097A7,color:#fff
+    style Pods fill:#795548,stroke:#5D4037,color:#fff

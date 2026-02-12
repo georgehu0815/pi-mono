@@ -111,6 +111,33 @@ OAuth credentials are also stored here after `/login` and managed automatically.
 
 ### Azure OpenAI
 
+**Managed Identity (Recommended - No API Key Required):**
+
+Azure OpenAI with managed identity is automatically prioritized as the default provider when available. This is the recommended approach for production deployments as it eliminates API key management.
+
+```bash
+# Production: Uses Azure Managed Identity automatically (no setup required)
+# Development: Requires Azure CLI authentication first
+az login
+pi  # Automatically uses Azure OpenAI with managed identity
+```
+
+**How it works:**
+- **Local development:** Uses `AzureCliCredential` (requires `az login`)
+- **Production:** Uses `ManagedIdentityCredential` (automatically configured when running in Azure)
+- **Authentication:** Bearer token provider with Azure AD (scope: `https://cognitiveservices.azure.com/.default`)
+- **Security:** No API keys stored or transmitted; leverages Azure RBAC
+
+**Configuration** (in `packages/ai/src/providers/azure-openai-models.ts`):
+- Endpoint: `https://datacopilothub8882317788.cognitiveservices.azure.com/`
+- Deployment: `gpt-5.2-chat`
+- API Version: `2024-08-01-preview`
+- Managed Identity Client ID: `c9427d44-98e2-406a-9527-f7fa7059f984`
+
+**API Key Authentication (Legacy):**
+
+For environments where managed identity is not available:
+
 ```bash
 export AZURE_OPENAI_API_KEY=...
 export AZURE_OPENAI_BASE_URL=https://your-resource.openai.azure.com

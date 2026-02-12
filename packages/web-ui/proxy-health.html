@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure OpenAI Proxy Health</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .status-ok {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .info-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .info-item {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+            word-break: break-all;
+        }
+
+        .refresh-btn {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+
+        .refresh-btn:hover {
+            background: #5568d3;
+        }
+
+        .refresh-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #f5c6cb;
+        }
+
+        .timestamp {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Proxy Health Monitor</h1>
+        <p class="subtitle">Azure OpenAI Proxy Server Status</p>
+
+        <div id="statusBadge" class="status-badge status-loading">
+            <span class="loading-spinner"></span>Checking...
+        </div>
+
+        <div id="content">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Status</div>
+                    <div class="info-value" id="status">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Service</div>
+                    <div class="info-value" id="service">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Azure Endpoint</div>
+                    <div class="info-value" id="endpoint">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">API Version</div>
+                    <div class="info-value" id="apiVersion">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="error" style="display: none;"></div>
+
+        <button id="refreshBtn" class="refresh-btn" onclick="checkHealth()">
+            🔄 Refresh Status
+        </button>
+
+        <div class="timestamp" id="timestamp"></div>
+    </div>
+
+    <script>
+        async function checkHealth() {
+            const statusBadge = document.getElementById('statusBadge');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const errorDiv = document.getElementById('error');
+
+            // Reset UI
+            statusBadge.className = 'status-badge status-loading';
+            statusBadge.innerHTML = '<span class="loading-spinner"></span>Checking...';
+            refreshBtn.disabled = true;
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('http://localhost:3001/health');
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                // Update status badge
+                statusBadge.className = 'status-badge status-ok';
+                statusBadge.textContent = '✅ Proxy Online';
+
+                // Update info
+                document.getElementById('status').textContent = data.status || 'Unknown';
+                document.getElementById('service').textContent = data.service || 'Unknown';
+                document.getElementById('endpoint').textContent = data.endpoint || 'Unknown';
+                document.getElementById('apiVersion').textContent = data.apiVersion || 'Unknown';
+
+                // Update timestamp
+                const now = new Date();
+                document.getElementById('timestamp').textContent =
+                    `Last checked: ${now.toLocaleTimeString()}`;
+
+            } catch (error) {
+                // Update status badge
+                statusBadge.className = 'status-badge status-error';
+                statusBadge.textContent = '❌ Proxy Offline';
+
+                // Show error
+                errorDiv.className = 'error-message';
+                errorDiv.innerHTML = `
+                    <strong>Error:</strong> ${error.message}<br><br>
+                    <strong>Possible causes:</strong><br>
+                    • Proxy server is not running<br>
+                    • Port 3001 is blocked<br>
+                    • CORS issue (check browser console)
+                `;
+                errorDiv.style.display = 'block';
+
+                // Clear info
+                document.getElementById('status').textContent = 'Offline';
+                document.getElementById('service').textContent = 'N/A';
+                document.getElementById('endpoint').textContent = 'N/A';
+                document.getElementById('apiVersion').textContent = 'N/A';
+
+            } finally {
+                refreshBtn.disabled = false;
+            }
+        }
+
+        // Check health on page load
+        checkHealth();
+
+        // Auto-refresh every 30 seconds
+        setInterval(checkHealth, 30000);
+    </script>
+</body>
+</html>

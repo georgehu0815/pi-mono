@@ -60,6 +60,21 @@ export function getEnvApiKey(provider: any): string | undefined {
 		return process.env.ANTHROPIC_OAUTH_TOKEN || process.env.ANTHROPIC_API_KEY;
 	}
 
+	// Azure OpenAI with Managed Identity - no API key required
+	// Uses Azure CLI credentials in development (`az login`) or managed identity in production
+	if (provider === "azure-openai-responses") {
+		// Check if Azure OpenAI managed identity is enabled (no API key required)
+		// In development: requires `az login`
+		// In production: uses managed identity automatically
+		// Return "<authenticated>" to indicate auth is available without API key
+		const apiKey = process.env.AZURE_OPENAI_API_KEY;
+		if (!apiKey) {
+			// No API key set - assume managed identity
+			return "<authenticated>";
+		}
+		// If API key is set, fall through to use it (legacy support)
+	}
+
 	// Vertex AI uses Application Default Credentials, not API keys.
 	// Auth is configured via `gcloud auth application-default login`.
 	if (provider === "google-vertex") {

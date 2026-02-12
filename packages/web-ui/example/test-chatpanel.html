@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatPanel Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        #status {
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e9; color: #2e7d32; }
+    </style>
+</head>
+<body>
+    <h1>ChatPanel Component Test</h1>
+    <div id="status">Initializing...</div>
+    <div id="app" style="height: 80vh; border: 1px solid #ccc; border-radius: 5px;"></div>
+
+    <script type="module">
+        const status = document.getElementById('status');
+
+        try {
+            status.textContent = 'Step 1: Importing ChatPanel...';
+
+            // Import ChatPanel
+            const { ChatPanel } = await import('/@mariozechner/pi-web-ui');
+
+            status.textContent = 'Step 2: Creating ChatPanel instance...';
+
+            // Create ChatPanel
+            const chatPanel = new ChatPanel();
+
+            status.textContent = 'Step 3: Rendering ChatPanel...';
+
+            // Append to DOM
+            document.getElementById('app').appendChild(chatPanel);
+
+            status.className = 'success';
+            status.textContent = '✅ ChatPanel rendered successfully! If you see an input box below, it works.';
+
+        } catch (error) {
+            status.className = 'error';
+            status.innerHTML = `
+                <strong>❌ Error:</strong> ${error.message}<br>
+                <pre>${error.stack}</pre>
+            `;
+            console.error('ChatPanel test error:', error);
+        }
+    </script>
+</body>
+</html>

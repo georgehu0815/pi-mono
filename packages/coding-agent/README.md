@@ -74,6 +74,14 @@ pi
 /login  # Then select provider
 ```
 
+**Azure OpenAI with Managed Identity** (production environments):
+
+```bash
+# No API key required - uses Azure managed identity automatically
+# Local development: requires `az login` first
+pi  # Automatically uses Azure OpenAI if configured
+```
+
 Then just talk to pi. By default, pi gives the model four tools: `read`, `write`, `edit`, and `bash`. The model uses these to fulfill your requests. Add capabilities via [skills](#skills), [prompt templates](#prompt-templates), [extensions](#extensions), or [pi packages](#pi-packages).
 
 **Platform notes:** [Windows](docs/windows.md) | [Termux (Android)](docs/termux.md) | [Terminal setup](docs/terminal-setup.md) | [Shell aliases](docs/shell-aliases.md)
@@ -94,7 +102,7 @@ For each built-in provider, pi maintains a list of tool-capable models, updated 
 **API keys:**
 - Anthropic
 - OpenAI
-- Azure OpenAI
+- **Azure OpenAI** (or managed identity - no API key needed in production, prioritized as default)
 - Google Gemini
 - Google Vertex
 - Amazon Bedrock
